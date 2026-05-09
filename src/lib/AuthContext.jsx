@@ -5,16 +5,27 @@ import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
 
+const base44AppId =
+  typeof import.meta !== 'undefined' ? import.meta.env.VITE_BASE44_APP_ID : undefined;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(!!base44AppId);
+  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(!!base44AppId);
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
 
   useEffect(() => {
+    // Deploy statico (es. Cloudflare Pages) senza Base44: non chiamare /api/apps/public
+    if (!base44AppId) {
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+      setIsAuthenticated(false);
+      return;
+    }
     checkAppState();
   }, []);
 
